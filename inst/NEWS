@@ -1,4 +1,6 @@
-07 Oct 2016 | Version 1.6: Add functionality for EPIC arrays, adapt to changes in minfi package, new location of vignette example IDAT files.
+12 Apr 2017 | Release 3.5: Fix dependecies, add methods by Tim Triche, Jr.
+
+07 Oct 2016 | Release 3.4: Add functionality for EPIC arrays, adapt to changes in minfi package, new location of vignette example IDAT files.
 
 15 May 2016 | Release 3.3
 13 Oct 2015 | Release 3.2

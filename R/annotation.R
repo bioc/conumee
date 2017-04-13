@@ -1,13 +1,13 @@
 ##### ANNOTATION methods #####
 
 #' @import minfi
-#' @import IlluminaHumanMethylation450kmanifest
-#' @import IlluminaHumanMethylation450kanno.ilmn12.hg19
-#' @import IlluminaHumanMethylationEPICmanifest
-#' @import IlluminaHumanMethylationEPICanno.ilm10b2.hg19
 #' @import GenomicRanges
 #' @import IRanges
 #' @import GenomeInfoDb
+#' @import IlluminaHumanMethylation450kanno.ilmn12.hg19
+#' @import IlluminaHumanMethylation450kmanifest
+#' @import IlluminaHumanMethylationEPICanno.ilm10b2.hg19
+#' @import IlluminaHumanMethylationEPICmanifest
 #' @importFrom rtracklayer import
 NULL
 
@@ -28,22 +28,31 @@ NULL
 #' anno
 #' @author Volker Hovestadt \email{conumee@@hovestadt.bio}
 #' @export
-CNV.create_anno <- function(bin_minprobes = 15, bin_minsize = 50000, bin_maxsize = 5e+06, 
+CNV.create_anno <- function(bin_minprobes = 15, bin_minsize = 50000, bin_maxsize = 5000000, 
     array_type = "450k", chrXY = FALSE, exclude_regions = NULL, detail_regions = NULL) {
     object <- new("CNV.anno")
     object@date <- date()
     
     a1 <- formals()
     a2 <- as.list(match.call())[-1]
-    object@args <- as.list(sapply(unique(names(c(a1, a2))), function(an) if (is.element(an, 
-        names(a2))) 
-        a2[[an]] else a1[[an]], simplify = FALSE))
-    
+    getElt <- function(an) { 
+      if (is.element(an, names(a2))) {
+          a2[[an]] 
+      } else {
+          a1[[an]]
+      }
+    }
+    object@args <- as.list(sapply(unique(names(c(a1, a2))), getElt, simplify=F))
     if (is.null(array_type)) {
       array_type <- "450k"
     }
     if (!is.element(array_type, c("450k", "EPIC", "overlap"))) {
       stop("array_type must be on of 450k, EPIC, or overlap")
+    } else { 
+      # need these to be explicit for plotting and sex matching
+      object@args[["bin_minsize"]] <- bin_minsize
+      object@args[["array_type"]] <- array_type
+      object@args[["chrXY"]] <- chrXY 
     }
     
     if (chrXY) {
@@ -78,10 +87,12 @@ CNV.create_anno <- function(bin_minprobes = 15, bin_minsize = 50000, bin_maxsize
     probes450k <- probesEPIC <- GRanges()
     if (is.element(array_type, c("450k", "overlap"))) {
       message("getting 450k annotations")
+      # library("IlluminaHumanMethylation450kanno.ilmn12.hg19") 
       probes450k <- sort(minfi::getLocations(IlluminaHumanMethylation450kanno.ilmn12.hg19::IlluminaHumanMethylation450kanno.ilmn12.hg19))
     }
     if (is.element(array_type, c("EPIC", "overlap"))) {
       message("getting EPIC annotations")
+      # library("IlluminaHumanMethylationEPICanno.ilm10b2.hg19") 
       probesEPIC <- sort(minfi::getLocations(IlluminaHumanMethylationEPICanno.ilm10b2.hg19::IlluminaHumanMethylationEPICanno.ilm10b2.hg19))
     }
     if (array_type == "overlap") {
@@ -91,8 +102,8 @@ CNV.create_anno <- function(bin_minprobes = 15, bin_minsize = 50000, bin_maxsize
     }
     
     # CpG probes only
-    probes <- probes[substr(names(probes), 1, 2) == "cg" & is.element(as.vector(seqnames(probes)), 
-        object@genome$chr)]
+    probes <- probes[substr(names(probes), 1, 2) == "cg" & 
+                     is.element(as.vector(seqnames(probes)), object@genome$chr)]
     object@probes <- sort(GRanges(as.vector(seqnames(probes)), ranges(probes), 
         seqinfo = Seqinfo(object@genome$chr, object@genome$size)))
     message(" - ", length(object@probes), " probes used")
@@ -101,8 +112,9 @@ CNV.create_anno <- function(bin_minprobes = 15, bin_minsize = 50000, bin_maxsize
       message("importing regions to exclude from analysis")
       if (class(exclude_regions) == "GRanges") {
         object@exclude <- GRanges(as.vector(seqnames(exclude_regions)), 
-                                  ranges(exclude_regions), seqinfo = Seqinfo(object@genome$chr, 
-                                                                             object@genome$size))
+                                  ranges(exclude_regions),
+                                  seqinfo = Seqinfo(object@genome$chr,
+                                                    object@genome$size))
         values(object@exclude) <- values(exclude_regions)
         object@exclude <- sort(object@exclude)
       } else {
