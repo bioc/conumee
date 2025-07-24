@@ -3,7 +3,7 @@
 #' @import minfi
 #' @import GenomicRanges
 #' @import IRanges
-#' @import GenomeInfoDb
+#' @import Seqinfo
 #' @import IlluminaHumanMethylation450kanno.ilmn12.hg19
 #' @import IlluminaHumanMethylation450kmanifest
 #' @import IlluminaHumanMethylationEPICanno.ilm10b2.hg19
